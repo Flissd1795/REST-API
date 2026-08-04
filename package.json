@@ -1,0 +1,21 @@
+{
+  "name": "rest-api",
+  "version": "1.0.0",
+  "description": "A simple in-memory REST API for learning backend and REST concepts",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flissd1795/REST-API.git"
+  },
+  "keywords": ["rest", "api", "backend", "http"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Flissd1795/REST-API/issues"
+  },
+  "homepage": "https://github.com/Flissd1795/REST-API#readme"
+}
