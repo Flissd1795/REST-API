@@ -1,9 +1,6 @@
-function findData(id, list) {
-  return list.find((d) => d.id === id);
-}
-
+// Get the id from a path like /dogs/68a1b2c3d4e5f6789012345
 function getId(endpoint) {
-  return Number(endpoint.split("/")[2]);
+  return endpoint.split("/")[2];
 }
 
-module.exports = { findData, getId };
+module.exports = { getId };
