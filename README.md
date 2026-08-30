@@ -1,6 +1,6 @@
 # Simple Dogs REST API
 
-A REST API for dogs, stored in **MongoDB Atlas** (via mongoose).
+A REST API for dogs, stored in **MongoDB Atlas** (via mongoose), served with **Express**.
 
 ## What is a backend?
 
@@ -54,6 +54,7 @@ Dog shape (Mongo adds `_id`):
 | GET | `/dogs/:id` | Get one dog (use Mongo `_id`) |
 | POST | `/dogs` | Add a dog (`name`, `breed`, `age`) |
 | PUT | `/dogs/:id` | Replace a dog |
+| PATCH | `/dogs/:id` | Change some fields |
 | DELETE | `/dogs/:id` | Delete a dog |
 
 ### Example requests
@@ -77,4 +78,4 @@ curl -X PATCH http://localhost:3000/dogs/REPLACE_WITH_ID \
   -d '{"age":4}'
 
 curl -X DELETE http://localhost:3000/dogs/REPLACE_WITH_ID
-``
+```
