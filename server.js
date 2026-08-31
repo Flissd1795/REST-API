@@ -4,11 +4,60 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const Dog = require("./models/Dog");
+const User = require("./models/User");
+const auth = require("./middleware/auth");
+const { createToken } = require("./middleware/utils");
 
 const app = express();
 // Parse JSON request bodies into req.body
 app.use(express.json());
+
+// POST /register — create an account
+// Next is an Express-provided callback function, what we pass it changes what express does
+app.post("/register", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
+    // Hashes password to 10 letter hash
+    // Bycrypt is one way, encryption is reversible
+    // When the user logs in, the password is compared to the hash
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({ email, password: hash });
+    res.status(201).json({ token: createToken(user), email: user.email });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /login — get a JWT
+app.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    const match = user && (await bcrypt.compare(password, user.password));
+    if (!match) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    res.json({ token: createToken(user) });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /dogs — all dogs
 app.get("/dogs", async (req, res, next) => {
@@ -32,7 +81,7 @@ app.get("/dogs/:id", async (req, res, next) => {
 });
 
 // POST /dogs — add a dog
-app.post("/dogs", async (req, res, next) => {
+app.post("/dogs", auth, async (req, res, next) => {
   try {
     const dog = await Dog.create({
       name: req.body.name,
@@ -46,7 +95,7 @@ app.post("/dogs", async (req, res, next) => {
 });
 
 // PUT /dogs/:id — replace a dog
-app.put("/dogs/:id", async (req, res, next) => {
+app.put("/dogs/:id", auth, async (req, res, next) => {
   try {
     const dog = await Dog.findOneAndReplace(
       { _id: req.params.id },
@@ -61,7 +110,7 @@ app.put("/dogs/:id", async (req, res, next) => {
 });
 
 // DELETE /dogs/:id — remove a dog
-app.delete("/dogs/:id", async (req, res, next) => {
+app.delete("/dogs/:id", auth, async (req, res, next) => {
   try {
     const dog = await Dog.findByIdAndDelete(req.params.id);
     if (!dog) return res.status(404).json({ error: "Dog not found" });
@@ -79,12 +128,19 @@ app.use((err, req, res, next) => {
   if (err.name === "CastError") {
     return res.status(404).json({ error: "Dog not found" });
   }
+  if (err.code === 11000) {
+    return res.status(409).json({ error: "Email already registered" });
+  }
   res.status(500).json({ error: "Server error" });
 });
 
 async function start() {
   if (!process.env.MONGODB_URI) {
     console.error("Missing MONGODB_URI in .env");
+    process.exit(1);
+  }
+  if (!process.env.JWT_SECRET) {
+    console.error("Missing JWT_SECRET in .env");
     process.exit(1);
   }
 
