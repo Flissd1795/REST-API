@@ -59,7 +59,7 @@ Dog shape (Mongo adds `_id`):
 
 | Method | Path | Auth | What it does |
 | --- | --- | --- | --- |
-| POST | `/register` | No | Create an account (`email`, `password`) |
+| POST | `/register` | No | Create an account (`email` must look like an address; `password` at least 8 characters with a letter and a number) |
 | POST | `/login` | No | Get a JWT (`email`, `password`) |
 | GET | `/dogs` | No | List all dogs (empty list is `[]`, not 404) |
 | GET | `/dogs/:id` | No | Get one dog (use Mongo `_id`) |
@@ -89,8 +89,8 @@ Authorization: Bearer YOUR_TOKEN
 
 | Route | Success | Failures |
 | --- | --- | --- |
-| `POST /register` | 201 `{ token, email }` | 400 missing fields or invalid JSON; 409 already exists |
-| `POST /login` | 200 `{ token }` | 400 missing fields or invalid JSON; 401 invalid email or password |
+| `POST /register` | 201 `{ token, email }` | 400 missing/invalid email or weak password, or invalid JSON; 409 already exists |
+| `POST /login` | 200 `{ token }` | 400 missing/invalid email, missing password, or invalid JSON; 401 invalid email or password |
 | `GET /dogs` | 200 array | 500 if the database fails |
 | `GET /dogs/:id` | 200 dog | 400 invalid id; 404 not found |
 | `POST /dogs` | 201 dog | 400 validation or invalid JSON; 401 missing/invalid token |
