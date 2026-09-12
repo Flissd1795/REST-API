@@ -2,6 +2,7 @@
 // process.env is the environment variables object e.g. process.env.MONGODB_URI
 require("dotenv").config();
 
+const cors = require("cors");
 const express = require("express");
 const { connectDb } = require("./config/db");
 const authRoutes = require("./routes/auth");
@@ -10,6 +11,8 @@ const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
 app.use(authRoutes);
