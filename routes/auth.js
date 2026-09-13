@@ -12,7 +12,7 @@ const router = express.Router();
 // Next is an Express-provided callback; what we pass it changes what Express does
 router.post("/register", async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     const emailError = validateEmail(email);
     if (emailError) return res.status(400).json({ error: emailError });
     // Validate password before hashing
@@ -25,10 +25,20 @@ router.post("/register", async (req, res, next) => {
       return res.status(409).json({ error: "Email already registered" });
     }
 
-    // bcrypt is one-way; encryption is reversible
+    // Register as USER by default. Role is accepted so the frontend can demo ADMIN.
+    const userRole = role === "ADMIN" ? "ADMIN" : "USER";
+
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email: normalisedEmail, password: hash });
-    res.status(201).json({ token: createToken(user), email: user.email });
+    const user = await User.create({
+      email: normalisedEmail,
+      password: hash,
+      role: userRole,
+    });
+    res.status(201).json({
+      token: createToken(user),
+      email: user.email,
+      role: user.role,
+    });
   } catch (err) {
     next(err);
   }
@@ -48,7 +58,11 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    res.json({ token: createToken(user) });
+    res.json({
+      token: createToken(user),
+      email: user.email,
+      role: user.role || "USER",
+    });
   } catch (err) {
     next(err);
   }

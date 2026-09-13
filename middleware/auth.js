@@ -13,6 +13,8 @@ function auth(req, res, next) {
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
         req.userId = payload.userId;
+        // Copy payload.role onto req.role
+        req.role = payload.role || "USER";
         next();
     } catch (err) {
         res.status(401).json({ error: "Invalid or expired token"});

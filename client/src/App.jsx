@@ -2,14 +2,31 @@ import { useState } from "react";
 import { api } from "./api";
 import "./App.css";
 
+function roleFromToken(token) {
+  if (!token) return ""; // Not logged in
+  try {
+    // JWT has 3 parts header.payload.signature
+    // atob turns Base64 (encoded) into JSON string
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role || "USER";
+  } catch {
+    return "";
+  }
+}
+
 function App() {
   // useState creates state - info that React remembers while the app is running.
   // Current state on left, function to change it on the right
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [roleChoice, setRoleChoice] = useState("USER");
   // Create a piece of React state called token. When the app starts, try to get an existing token from the browser's storage. If there isn't one, start with an empty string.
   // Look in the browser's local storage and get whatever is stored under the name token
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  // Take role from token
+  const [role, setRole] = useState(() =>
+    roleFromToken(localStorage.getItem("token") || "")
+  );
   const [message, setMessage] = useState("");
 
   const [name, setName] = useState("");
@@ -18,21 +35,27 @@ function App() {
   const [editingId, setEditingId] = useState("");
   const [dogs, setDogs] = useState([]);
 
+  const isLoggedIn = Boolean(token);
+  const isAdmin = role === "ADMIN";
+
   function showError(err) {
     setMessage(err.message || "Something went wrong");
+  }
+
+  function saveSession(data) {
+    setToken(data.token);
+    setRole(data.role || roleFromToken(data.token));
+    localStorage.setItem("token", data.token);
   }
 
   async function register() {
     try {
       const data = await api("/register", {
         method: "POST",
-        body: { email, password },
+        body: { email, password, role: roleChoice },
       });
-      // Takes token from response and stores it in state/local storage
-      setToken(data.token);
-      // Save token in browser so if you refresh, you're still logged in
-      localStorage.setItem("token", data.token);
-      setMessage("Registered. You are logged in.");
+      saveSession(data);
+      setMessage("Registered as " + data.role + ". You are logged in.");
     } catch (err) {
       showError(err);
     }
@@ -44,9 +67,8 @@ function App() {
         method: "POST",
         body: { email, password },
       });
-      setToken(data.token);
-      localStorage.setItem("token", data.token);
-      setMessage("Logged in.");
+      saveSession(data);
+      setMessage("Logged in as " + data.role + ".");
     } catch (err) {
       showError(err);
     }
@@ -54,6 +76,7 @@ function App() {
 
   function logout() {
     setToken("");
+    setRole("");
     localStorage.removeItem("token");
     setMessage("Logged out.");
   }
@@ -112,10 +135,32 @@ function App() {
     }
   }
 
+  async function deleteDog(id) {
+    try {
+      await api("/dogs/" + id, {
+        method: "DELETE",
+        token,
+      });
+      if (editingId === id) {
+        setEditingId("");
+        setName("");
+        setBreed("");
+        setAge("");
+      }
+      setMessage("Dog deleted.");
+      await loadDogs();
+    } catch (err) {
+      showError(err);
+    }
+  }
+
   return (
     <main className="app">
       <h1>Dogs API</h1>
-      <p className="status">{message || (token ? "Logged in" : "Not logged in")}</p>
+      <p className="status">
+        {message ||
+          (isLoggedIn ? "Logged in as " + role : "Not logged in")}
+      </p>
 
       <section>
         <h2>Register / Login</h2>
@@ -135,6 +180,16 @@ function App() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
+        <label>
+          Role (register only)
+          <select
+            value={roleChoice}
+            onChange={(e) => setRoleChoice(e.target.value)}
+          >
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </label>
         <div className="row">
           <button type="button" onClick={register}>
             Register
@@ -150,7 +205,10 @@ function App() {
 
       <section>
         <h2>Dogs</h2>
-        <p>Anyone can load the list. Add and update need a login.</p>
+        <p>
+          Anyone can load the list. Logged-in USER or ADMIN can add. Only ADMIN
+          can update or delete.
+        </p>
         <label>
           Name
           <input value={name} onChange={(e) => setName(e.target.value)} />
@@ -172,10 +230,14 @@ function App() {
           <button type="button" onClick={loadDogs}>
             Get dogs
           </button>
-          <button type="button" onClick={addDog}>
+          <button type="button" onClick={addDog} disabled={!isLoggedIn}>
             Add dog
           </button>
-          <button type="button" onClick={updateDog} disabled={!editingId}>
+          <button
+            type="button"
+            onClick={updateDog}
+            disabled={!isAdmin || !editingId}
+          >
             Update dog
           </button>
         </div>
@@ -185,9 +247,16 @@ function App() {
           {dogs.map((dog) => (
             <li key={dog._id}>
               {dog.name} — {dog.breed} — {dog.age}
-              <button type="button" onClick={() => startEdit(dog)}>
-                Edit
-              </button>
+              {isAdmin && (
+                <span className="row">
+                  <button type="button" onClick={() => startEdit(dog)}>
+                    Edit
+                  </button>
+                  <button type="button" onClick={() => deleteDog(dog._id)}>
+                    Delete
+                  </button>
+                </span>
+              )}
             </li>
           ))}
         </ul>
