@@ -49,7 +49,7 @@ function App() {
   return (
     <main className="app">
       <h1>Dogs API</h1>
-      <p className="status">
+      <p className="status" aria-live="polite">
         {message || (isLoggedIn ? "Logged in as " + role : "Not logged in")}
       </p>
 
@@ -70,10 +70,18 @@ function App() {
 
       {/* Render the Register component and give it two functions */}
       {page === "register" && (
-        <Register onSuccess={handleRegister} onError={showError} />
+        <Register
+          onSuccess={handleRegister}
+          onError={showError}
+          onMessage={setMessage}
+        />
       )}
       {page === "login" && (
-        <Login onSuccess={handleLogin} onError={showError} />
+        <Login
+          onSuccess={handleLogin}
+          onError={showError}
+          onMessage={setMessage}
+        />
       )}
       {page === "dogs" && (
         <Dogs

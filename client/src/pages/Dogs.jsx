@@ -7,18 +7,32 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
   const [age, setAge] = useState("");
   const [editingId, setEditingId] = useState("");
   const [dogs, setDogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  async function refreshDogs() {
+    const data = await api("/dogs");
+    setDogs(data);
+    setHasLoaded(true);
+    return data;
+  }
 
   async function loadDogs() {
+    setLoading(true);
+    onMessage("Loading dogs...");
     try {
-      const data = await api("/dogs");
-      setDogs(data);
+      const data = await refreshDogs();
       onMessage("Loaded " + data.length + " dog(s).");
     } catch (err) {
       onError(err);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function addDog() {
+    setLoading(true);
+    onMessage("Adding dog...");
     try {
       await api("/dogs", {
         method: "POST",
@@ -28,10 +42,12 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
       setName("");
       setBreed("");
       setAge("");
+      await refreshDogs();
       onMessage("Dog added.");
-      await loadDogs();
     } catch (err) {
       onError(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -43,6 +59,8 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
   }
 
   async function updateDog() {
+    setLoading(true);
+    onMessage("Updating dog...");
     try {
       await api("/dogs/" + editingId, {
         method: "PUT",
@@ -53,14 +71,18 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
       setName("");
       setBreed("");
       setAge("");
+      await refreshDogs();
       onMessage("Dog updated.");
-      await loadDogs();
     } catch (err) {
       onError(err);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function deleteDog(id) {
+    setLoading(true);
+    onMessage("Deleting dog...");
     try {
       await api("/dogs/" + id, {
         method: "DELETE",
@@ -72,10 +94,12 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
         setBreed("");
         setAge("");
       }
+      await refreshDogs();
       onMessage("Dog deleted.");
-      await loadDogs();
     } catch (err) {
       onError(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -88,11 +112,19 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
       </p>
       <label>
         Name
-        <input value={name} onChange={(e) => setName(e.target.value)} />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={loading}
+        />
       </label>
       <label>
         Breed
-        <input value={breed} onChange={(e) => setBreed(e.target.value)} />
+        <input
+          value={breed}
+          onChange={(e) => setBreed(e.target.value)}
+          disabled={loading}
+        />
       </label>
       <label>
         Age
@@ -101,23 +133,27 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
           min="0"
           value={age}
           onChange={(e) => setAge(e.target.value)}
+          disabled={loading}
         />
       </label>
       <div className="row">
-        <button type="button" onClick={loadDogs}>
-          Get dogs
+        <button type="button" onClick={loadDogs} disabled={loading}>
+          {loading ? "Loading..." : "Get dogs"}
         </button>
-        <button type="button" onClick={addDog} disabled={!isLoggedIn}>
-          Add dog
+        <button type="button" onClick={addDog} disabled={!isLoggedIn || loading}>
+          {loading ? "Adding..." : "Add dog"}
         </button>
         <button
           type="button"
           onClick={updateDog}
-          disabled={!isAdmin || !editingId}
+          disabled={!isAdmin || !editingId || loading}
         >
-          Update dog
+          {loading ? "Updating..." : "Update dog"}
         </button>
       </div>
+
+      {loading && !hasLoaded && <p>Loading dogs...</p>}
+      {hasLoaded && dogs.length === 0 && !loading && <p>No dogs yet.</p>}
 
       <ul className="dogs">
         {dogs.map((dog) => (
@@ -125,11 +161,19 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
             {dog.name} — {dog.breed} — {dog.age}
             {isAdmin && (
               <span className="row">
-                <button type="button" onClick={() => startEdit(dog)}>
+                <button
+                  type="button"
+                  onClick={() => startEdit(dog)}
+                  disabled={loading}
+                >
                   Edit
                 </button>
-                <button type="button" onClick={() => deleteDog(dog._id)}>
-                  Delete
+                <button
+                  type="button"
+                  onClick={() => deleteDog(dog._id)}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete"}
                 </button>
               </span>
             )}

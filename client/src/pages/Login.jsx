@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { api } from "../api";
 
-export default function Login({ onSuccess, onError }) {
+export default function Login({ onSuccess, onError, onMessage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function login() {
+    setLoading(true);
+    onMessage("Logging in...");
     try {
       const data = await api("/login", {
         method: "POST",
@@ -14,6 +17,8 @@ export default function Login({ onSuccess, onError }) {
       onSuccess(data);
     } catch (err) {
       onError(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -26,6 +31,7 @@ export default function Login({ onSuccess, onError }) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
         />
       </label>
       <label>
@@ -34,11 +40,12 @@ export default function Login({ onSuccess, onError }) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
         />
       </label>
       <div className="row">
-        <button type="button" onClick={login}>
-          Login
+        <button type="button" onClick={login} disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
         </button>
       </div>
     </section>
