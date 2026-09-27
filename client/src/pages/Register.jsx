@@ -10,7 +10,10 @@ export default function Register({ onSuccess, onError, onMessage }) {
   const [roleChoice, setRoleChoice] = useState("USER");
   const [loading, setLoading] = useState(false); // Start with loading state false (not registering anything)
 
-  async function register() {
+  // Passes in event object React gives the function when form is submitted
+  async function register(e) {
+    e.preventDefault(); // Prevents browser default reload of page
+
     setLoading(true); // Set loading to true when someone clicks register
     onMessage("Registering...");
     try {
@@ -29,6 +32,9 @@ export default function Register({ onSuccess, onError, onMessage }) {
   return (
     <section>
       <h2>Register</h2>
+
+      {/* When form is submitted, run register() */}
+      <form onSubmit={register}>
       <label>
         Email
         <input
@@ -39,6 +45,7 @@ export default function Register({ onSuccess, onError, onMessage }) {
           disabled={loading}
         />
       </label>
+
       <label>
         Password
         <input
@@ -48,6 +55,7 @@ export default function Register({ onSuccess, onError, onMessage }) {
           disabled={loading}
         />
       </label>
+
       <label>
         Role
         <select
@@ -56,15 +64,17 @@ export default function Register({ onSuccess, onError, onMessage }) {
           disabled={loading}
         >
           <option value="USER">USER</option>
-          <option value="ADMIN">ADMIN</option>
         </select>
       </label>
+
       <div className="row">
-        <button type="button" onClick={register} disabled={loading}>
-          {/* Button changes text dependent on state */}
+        {/* Button submits the form (or enter) */}
+        <button type="submit" disabled={loading}>
           {loading ? "Registering..." : "Register"}
         </button>
       </div>
+
+      </form>
     </section>
   );
 }

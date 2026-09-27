@@ -6,7 +6,9 @@ export default function Login({ onSuccess, onError, onMessage }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function login() {
+  async function login(e) {
+    e.preventDefault(); 
+    
     setLoading(true);
     onMessage("Logging in...");
     try {
@@ -25,6 +27,8 @@ export default function Login({ onSuccess, onError, onMessage }) {
   return (
     <section>
       <h2>Login</h2>
+
+      <form onSubmit={login}>
       <label>
         Email
         <input
@@ -34,6 +38,7 @@ export default function Login({ onSuccess, onError, onMessage }) {
           disabled={loading}
         />
       </label>
+
       <label>
         Password
         <input
@@ -43,11 +48,13 @@ export default function Login({ onSuccess, onError, onMessage }) {
           disabled={loading}
         />
       </label>
+
       <div className="row">
-        <button type="button" onClick={login} disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
       </div>
+      </form>
     </section>
   );
 }
