@@ -70,9 +70,11 @@ function App() {
     
         <Link to="/dogs">Dogs</Link>
 
-        <button type="button" onClick={logout} disabled={!isLoggedIn}>
+        {isLoggedIn && (
+          <button type="button" onClick={logout}>
           Log out
-        </button>
+          </button>
+        )}
       </nav>
 
       <Routes>
