@@ -61,8 +61,13 @@ function App() {
       </p>
 
       <nav className="row">
-        <Link to="/register">Register</Link>
-        <Link to="/login">Login</Link>
+        {!isLoggedIn && (
+          <>
+          <Link to="/register">Register</Link>
+          <Link to="/login">Login</Link>
+          </>
+        )}
+    
         <Link to="/dogs">Dogs</Link>
 
         <button type="button" onClick={logout} disabled={!isLoggedIn}>
