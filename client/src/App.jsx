@@ -4,6 +4,12 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dogs from "./pages/Dogs";
 import "./App.css";
+import {
+  Link,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
@@ -11,8 +17,9 @@ function App() {
     roleFromToken(localStorage.getItem("token") || "")
   );
   const [message, setMessage] = useState("");
-  const [page, setPage] = useState("dogs");
 
+  const navigate = useNavigate();
+  
   const isLoggedIn = Boolean(token);
   const isAdmin = role === "ADMIN";
 
@@ -29,13 +36,13 @@ function App() {
   function handleRegister(data) {
     saveSession(data);
     setMessage("Registered as " + data.role + ". You are logged in.");
-    setPage("dogs");
+    navigate("/dogs");
   }
 
   function handleLogin(data) {
     saveSession(data);
     setMessage("Logged in as " + data.role + ".");
-    setPage("dogs");
+    navigate("/dogs");
   }
 
   function logout() {
@@ -43,7 +50,7 @@ function App() {
     setRole("");
     localStorage.removeItem("token");
     setMessage("Logged out.");
-    setPage("login");
+    navigate("/login");
   }
 
   return (
@@ -54,44 +61,51 @@ function App() {
       </p>
 
       <nav className="row">
-        <button type="button" onClick={() => setPage("register")}>
-          Register
-        </button>
-        <button type="button" onClick={() => setPage("login")}>
-          Login
-        </button>
-        <button type="button" onClick={() => setPage("dogs")}>
-          Dogs
-        </button>
+        <Link to="/register">Register</Link>
+        <Link to="/login">Login</Link>
+        <Link to="/dogs">Dogs</Link>
+
         <button type="button" onClick={logout} disabled={!isLoggedIn}>
           Log out
         </button>
       </nav>
 
-      {/* Render the Register component and give it two functions */}
-      {page === "register" && (
-        <Register
-          onSuccess={handleRegister}
-          onError={showError}
-          onMessage={setMessage}
-        />
-      )}
-      {page === "login" && (
-        <Login
-          onSuccess={handleLogin}
-          onError={showError}
-          onMessage={setMessage}
-        />
-      )}
-      {page === "dogs" && (
-        <Dogs
-          token={token}
-          isLoggedIn={isLoggedIn}
-          isAdmin={isAdmin}
-          onMessage={setMessage}
-          onError={showError}
-        />
-      )}
+      <Routes>
+        <Route
+          path="/register"
+          element={
+            <Register
+            onSuccess={handleRegister}
+            onError={showError}
+            onMessage={setMessage}
+            />
+          }
+          />
+
+        <Route
+          path="/login"
+          element={
+            <Login
+            onSuccess={handleLogin}
+            onError={showError}
+            onMessage={setMessage}
+            />
+          }
+          />
+
+          <Route
+            path="/dogs"
+            element={
+              <Dogs
+              token={token}
+              isLoggedIn={isLoggedIn}
+              isAdmin={isAdmin}
+              onMessage={setMessage}
+              onError={showError}
+              />
+            }
+            />
+      </Routes>
     </main>
   );
 }
