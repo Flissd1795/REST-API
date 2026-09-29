@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { roleFromToken } from "./lib/roleFromToken";
+import { useEffect, useState } from "react";
+import { api } from "./api";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dogs from "./pages/Dogs";
@@ -12,45 +12,54 @@ import {
 } from "react-router-dom";
 
 function App() {
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
-  const [role, setRole] = useState(() =>
-    roleFromToken(localStorage.getItem("token") || "")
-  );
   const [message, setMessage] = useState("");
+  const [role, setRole] = useState("");
+  // are we still checking whether the user is already logged in?
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const navigate = useNavigate();
-  
-  const isLoggedIn = Boolean(token);
+
+  const isLoggedIn = Boolean(role);
   const isAdmin = role === "ADMIN";
+
+  // Replaces localStorage.getItem("token")
+  useEffect(() => {
+    api("/me")
+      .then((data) => setRole(data.role))
+      .catch(() => setRole(""))
+      .finally(() => setCheckingSession(false));
+  }, []);
 
   function showError(err) {
     setMessage(err.message || "Something went wrong");
   }
 
-  function saveSession(data) {
-    setToken(data.token);
-    setRole(data.role || roleFromToken(data.token));
-    localStorage.setItem("token", data.token);
-  }
-
   function handleRegister(data) {
-    saveSession(data);
+    setRole(data.role);
     setMessage("Registered as " + data.role + ". You are logged in.");
     navigate("/dogs");
   }
 
   function handleLogin(data) {
-    saveSession(data);
+    setRole(data.role);
     setMessage("Logged in as " + data.role + ".");
     navigate("/dogs");
   }
 
-  function logout() {
-    setToken("");
+  async function logout() {
+    try {
+      await api("/logout", { method: "POST" });
+    } catch (err) {
+      showError(err);
+      return;
+    }
     setRole("");
-    localStorage.removeItem("token");
     setMessage("Logged out.");
     navigate("/login");
+  }
+
+  if (checkingSession) {
+    return null;
   }
 
   return (
@@ -67,7 +76,7 @@ function App() {
           <Link to="/login">Login</Link>
           </>
         )}
-    
+
         <Link to="/dogs">Dogs</Link>
 
         {isLoggedIn && (
@@ -104,7 +113,6 @@ function App() {
             path="/dogs"
             element={
               <Dogs
-              token={token}
               isLoggedIn={isLoggedIn}
               isAdmin={isAdmin}
               onMessage={setMessage}

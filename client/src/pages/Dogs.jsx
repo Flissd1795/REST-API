@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 
-export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError }) {
+export default function Dogs({ isLoggedIn, isAdmin, onMessage, onError }) {
   const [name, setName] = useState("");
   const [breed, setBreed] = useState("");
   const [age, setAge] = useState("");
@@ -36,7 +36,6 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
     try {
       await api("/dogs", {
         method: "POST",
-        token,
         body: { name, breed, age: Number(age) },
       });
       setName("");
@@ -64,7 +63,6 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
     try {
       await api("/dogs/" + editingId, {
         method: "PUT",
-        token,
         body: { name, breed, age: Number(age) },
       });
       setEditingId("");
@@ -86,7 +84,6 @@ export default function Dogs({ token, isLoggedIn, isAdmin, onMessage, onError })
     try {
       await api("/dogs/" + id, {
         method: "DELETE",
-        token,
       });
       if (editingId === id) {
         setEditingId("");

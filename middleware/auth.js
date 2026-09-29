@@ -3,14 +3,14 @@
 const jwt = require("jsonwebtoken");
 
 function auth(req, res, next) {
-    const header = req.headers.authorization || "";
-    const [type, token] = header.split(" ");
+    const token = req.cookies.token;
 
-    if (type !== "Bearer" || !token) {
+    if (!token) {
         return res.status(401).json({ error: "Missing token" });
     }
 
     try {
+        // Was this JWT created using my secret, and is it still valid?
         const payload = jwt.verify(token, process.env.JWT_SECRET);
         req.userId = payload.userId;
         // Copy payload.role onto req.role

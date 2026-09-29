@@ -6,11 +6,10 @@ const API_URL = "http://localhost:3000";
 // Examples:
 //   api("/dogs")
 //   api("/login", { method: "POST", body: { email, password } })
-//   api("/dogs", { method: "POST", body: dog, token })
+//   api("/dogs", { method: "POST", body: dog })
 export async function api(path, options = {}) {
   const method = options.method || "GET";
   const body = options.body;
-  const token = options.token;
 
   // Headers are extra info sent with the request
   const headers = {};
@@ -20,22 +19,24 @@ export async function api(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Protected routes need: Authorization: Bearer YOUR_TOKEN
-  if (token) {
-    headers.Authorization = "Bearer " + token;
-  }
-
   let res;
   try {
     // fetch talks to the server. await means "wait for the reply"
     res = await fetch(API_URL + path, {
       method: method,
       headers: headers,
+      // Send the httpOnly auth cookie with every request
+      credentials: "include",
       // Objects must be turned into a JSON string before sending
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
     throw new Error("Could not reach the server. Is the API running?");
+  }
+
+  if (res.status === 204) {
+    if (!res.ok) throw new Error("Request failed (" + res.status + ")");
+    return null;
   }
 
   let data;
