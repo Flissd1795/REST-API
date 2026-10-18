@@ -3,57 +3,46 @@
 This diagram shows the overall architecutre of the Dogs API. 
 
 ```mermaid
-graph TB
-  subgraph Frontend["React Frontend"]
-    AppJsx["App.jsx"]
-    LoginJsx["Login.jsx"]
-    RegisterJsx["Register.jsx"]
-    DogsJsx["Dogs.jsx"]
-  end
+flowchart TB
+    subgraph Frontend["React Frontend"]
+        App["App.jsx"]
+        Login["Login.jsx"]
+        Register["Register.jsx"]
+        Dogs["Dogs.jsx"]
+    end
 
-  subgraph APILayer["API Layer"]
-    ApiJs["api.js"]
-  end
+    Api["api.js"]
 
-  subgraph Backend["Express Backend"]
-    Routes["Routes"]
-    AuthMiddleware["Auth/Role Middleware"]
-  end
+    subgraph Backend["Express Backend"]
+        Routes["API Routes"]
+        Auth["Authentication and Role Middleware"]
+    end
 
-  subgraph DataLayer["Data Layer"]
-    UserModel["User Model"]
-    DogModel["Dog Model"]
-  end
+    subgraph Models["Mongoose Models"]
+        User["User Model"]
+        Dog["Dog Model"]
+    end
 
-  MongoDB[("MongoDB")]
-  Cookie["HTTP-only Cookie<br/>JWT Token"]
+    DB[("MongoDB")]
+    Cookie["Browser Cookie containing JWT"]
 
-  AppJsx --> LoginJsx
-  AppJsx --> RegisterJsx
-  AppJsx --> DogsJsx
-  LoginJsx --> ApiJs
-  RegisterJsx --> ApiJs
-  DogsJsx --> ApiJs
-  ApiJs --> Cookie
-  ApiJs -->|"HTTP Requests"| Routes
-  Routes --> AuthMiddleware
-  AuthMiddleware --> UserModel
-  AuthMiddleware --> DogModel
-  UserModel --> MongoDB
-  DogModel --> MongoDB
+    App --> Login
+    App --> Register
+    App --> Dogs
 
-  classDef frontend stroke #818cf8,fill #eef2ff
-  classDef api stroke #2dd4bf,fill #f0fdfa
-  classDef backend stroke #a78bfa,fill #f5f3ff
-  classDef data stroke #fb923c,fill #fff7ed
-  classDef storage stroke #f87171,fill #fef2f2
-  classDef auth stroke #facc15,fill #fefce8
+    Login --> Api
+    Register --> Api
+    Dogs --> Api
 
-  class AppJsx,LoginJsx,RegisterJsx,DogsJsx frontend
-  class ApiJs api
-  class Routes,AuthMiddleware backend
-  class UserModel,DogModel data
-  class MongoDB storage
-  class Cookie auth
-  end
-  ```
+    Api -->|"HTTP requests"| Routes
+    Routes --> Auth
+    Auth --> User
+    Auth --> Dog
+
+    User --> DB
+    Dog --> DB
+
+    Browser["Browser"]
+    Browser -. "Stores and sends cookie" .-> Cookie
+    Cookie -. "Sent with eligible requests" .-> Browser
+```

@@ -2,38 +2,40 @@
 
 This diagram shows how login works and how the browser sends the authentication cookie with later requests.
 
+
 ```mermaid
 sequenceDiagram
-  participant User
-  participant ReactFrontend as React Frontend
-  participant Browser
-  participant ExpressBackend as Express Backend
-  participant MongoDB
+    actor User
+    participant React as React Frontend
+    participant Browser
+    participant API as Express Backend
+    participant DB as MongoDB
 
-  User->>ReactFrontend: Submits email and password
-  ReactFrontend->>Browser: POST /login with credentials
-  Browser->>ExpressBackend: POST /login
-  ExpressBackend->>MongoDB: Query user by email
-  MongoDB-->>ExpressBackend: User document
-  ExpressBackend->>ExpressBackend: Verify password with bcrypt
-  alt Password Valid
-    ExpressBackend->>ExpressBackend: Create JWT
-    ExpressBackend->>Browser: 200 OK + JWT in HTTP-only cookie
-    Browser->>ReactFrontend: Cookie stored automatically
-    ReactFrontend->>User: Login successful
-  else Password Invalid
-    ExpressBackend->>Browser: 401 Unauthorized
-    Browser->>ReactFrontend: Error response
-    ReactFrontend->>User: Display error message
-  end
-  User->>ReactFrontend: Later, make authenticated request
-  ReactFrontend->>Browser: GET /dogs (or other endpoint)
-  Browser->>ExpressBackend: GET /dogs + Cookie auto-sent
-  ExpressBackend->>ExpressBackend: Verify JWT from cookie
-  ExpressBackend->>MongoDB: Fetch data for authenticated user
-  MongoDB-->>ExpressBackend: Data
-  ExpressBackend-->>Browser: 200 OK + Data
-  Browser-->>ReactFrontend: Data
-  ReactFrontend->>User: Display dogs
-  end
-  ```
+    User->>React: Submits email and password
+    React->>Browser: Sends POST /login
+    Browser->>API: POST /login
+    API->>DB: Find user by email
+    DB-->>API: Return user document
+    API->>API: Verify password with bcrypt
+
+    alt Password is valid
+        API-->>Browser: 200 OK and Set-Cookie
+        Browser->>Browser: Store HTTP-only cookie
+        Browser-->>React: Login response
+        React->>User: Login successful
+    else Password is invalid
+        API-->>Browser: 401 Unauthorized
+        Browser-->>React: Error response
+        React->>User: Display login error
+    end
+
+    User->>React: Makes a later API request
+    React->>Browser: Calls api("/dogs")
+    Browser->>API: GET /dogs with eligible cookie
+    API->>API: Verify JWT if route requires authentication
+    API->>DB: Fetch dogs
+    DB-->>API: Return dogs
+    API-->>Browser: Response with data
+    Browser-->>React: Return response
+    React->>User: Display dogs
+```
