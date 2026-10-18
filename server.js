@@ -2,7 +2,6 @@
 // process.env is the environment variables object e.g. process.env.MONGODB_URI
 require("dotenv").config();
 
-const cookieParse = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
 const { connectDb } = require("./config/db");
